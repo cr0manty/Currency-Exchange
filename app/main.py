@@ -93,7 +93,6 @@ def add_course(message):
             course = check_course(new_course)
             if course:
                 course_list.append(new_course)
-                write_to_file(new_course)
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
@@ -124,5 +123,4 @@ def send_text(message):
 
 
 if __name__ == '__main__':
-    read_from_file()
     bot.polling()

@@ -47,18 +47,5 @@ def get_course(values):
             return
 
 
-def read_from_file():
-    # TODO исправить /add
-    global course_list
-    with open('course.txt', 'r', encoding='utf-8') as f:
-        from_file = f.read()
-        course_list = from_file.split()
-
-
-def write_to_file(data):
-    with open('course.txt', 'a', encoding='utf-8') as f:
-        f.write(data + ' ')
-
-
 def check_course(to_check):
     return requests.get(course_api.format(to_check)).json()['rates'][to_check]
