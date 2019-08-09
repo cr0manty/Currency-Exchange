@@ -10,8 +10,12 @@ bot = telebot.TeleBot(token)
 @bot.message_handler(commands=['start'])
 def update_course(message):
     bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name +
-                     '! Я бот который конверирует необходимую сумму из одной валюты в другую.' +
-                     "Формат ввода: 'число' 'валюта из' 'валюта в'" + emojize(':eyes:'))
+                     '! Я бот который конверирует необходимую сумму из одной валюты в другую.\n' +
+                     'Ты можешь использовать меня как в этом, так и в других чатах.\n' +
+                     'Но тебе обязательно нужно придерживаться формата ввода 👀\n' +
+                     "Формат ввода: 'число' 'валюта из' 'валюта в'")
+    bot.send_message(message.chat.id,
+                     'Временно!!!\n /add работает на 1 сессию.\nТакже нет возможности добавить крипту')
 
 
 @bot.inline_handler(func=lambda query: len(query.query) > 8)
@@ -22,7 +26,7 @@ def query_text(query):
         return
     text = query.query.upper().split()
     try:
-        if text[1] in keys_first and text[2] in keys_first and to_digit(text[0]):
+        if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
             text.append(get_course(text))
             result = types.InlineQueryResultArticle(
                 id='0', title="Конвертор",
@@ -42,57 +46,70 @@ def query_text(query):
 
 @bot.inline_handler(func=lambda query: len(query.query) < 8)
 def empty_query(query):
-    hint = "Введите ровно 2 числа и получите результат!"
     try:
-        r = types.InlineQueryResultArticle(
+        result = types.InlineQueryResultArticle(
             id='1',
             title='Ожидается формат',
             description="Формат: 'число' 'валюта из' 'валюта в'",
             input_message_content=types.InputTextMessageContent(
                 message_text=query.query)
         )
-        bot.answer_inline_query(query.id, [r])
+        bot.answer_inline_query(query.id, [result])
     except Exception as e:
         print(e)
 
 
 @bot.message_handler(commands=['know'])
 def known_course(message):
-    known = ''
-    for i in keys_first:
-        known += i + ' '
-    bot.send_message(message.chat.id, known)
+    try:
+        text = message.text.upper().split()
+        text.remove('/know')
+        if not text:
+            bot_message = ''
+            for i in course_list:
+                bot_message += i + ' '
+            bot.send_message(message.chat.id, bot_message)
+        elif len(text) == 1:
+            bot.send_message(message.chat.id,
+                             'Я знаю такую валюту 😁' if text[0] in course_list\
+                             else 'Я еще не могу использовать ' + text[0] + ', но я скоро выучу 🥺')
+        else:
+            bot.send_message(message.chat.id, 'Я могу проверить только 1 валюту за раз 😔')
+    except:
+        return
 
 
 @bot.message_handler(commands=['add'])
 def add_course(message):
-    new_course = message.text.upper().split()[1]
-    if len(new_course) != 3:
-        bot.send_message(message.chat.id, 'Ошибочка! Такой курс невозможен!\
-                                          Для добавления курса требуется ввести его аббревиатуру!\n\
-                                          Пример сообщения: \'/add uah\'')
-    elif new_course in keys_first:
-        bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
-    else:
-        course = check_course(message.text)
-        #TODO исправить
-        if course:
-            keys_first.append(new_course)
-            write_to_file(new_course)
+    try:
+        new_course = message.text.upper().split()[1]
+        if len(new_course) != 3:
+            bot.send_message(message.chat.id, '''Ошибочка! Такой курс невозможен!
+Для добавления курса требуется ввести его аббревиатуру!
+Пример сообщения: \'/add uah\'''')
+        elif new_course in course_list:
+            bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
-            bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
-
+            course = check_course(new_course)
+            if course:
+                course_list.append(new_course)
+                write_to_file(new_course)
+                bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
+            else:
+                bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
+    except:
+        bot.send_message(message.chat.id, 'Ой! Что-то пошло не так 😰')
 
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
     if parse_text(message.text):
         text = message.text.upper().split()
-        if text[1] in keys_first and text[2] in keys_first and to_digit(text[0]):
+        if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
             text.append(get_course(text))
             bot.send_message(message.chat.id, format_course(text))
         else:
-            bot.send_message(message.chat.id, 'Выражение введено неправильно '
+            bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
                              + emojize(':anxious_face_with_sweat:'))
 
     elif 'привет' in message.text.lower():
