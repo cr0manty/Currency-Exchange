@@ -1,10 +1,9 @@
-import telebot
-from app.config import token
+from app.config import token, course_list
 from emoji import emojize
-from app.func import *
-from telebot import types
+from app.func import parse_text, to_digit, format_course, get_course, check_course
+from telebot import types, TeleBot
 
-bot = telebot.TeleBot(token)
+bot = TeleBot(token)
 
 
 @bot.message_handler(commands=['start'])
@@ -37,9 +36,8 @@ def query_text(query):
                 input_message_content=types.InputTextMessageContent(
                     message_text=''))
         bot.answer_inline_query(query.id, [result])
-
     except Exception as e:
-        return
+        print(e)
 
 
 @bot.inline_handler(func=lambda query: len(query.query) < 8)
@@ -50,8 +48,7 @@ def empty_query(query):
             title='Ожидается формат',
             description="Формат: 'число' 'валюта из' 'валюта в'",
             input_message_content=types.InputTextMessageContent(
-                message_text=query.query)
-        )
+                message_text=query.query))
         bot.answer_inline_query(query.id, [result])
     except Exception as e:
         print(e)
@@ -70,19 +67,19 @@ def add_course(message):
     try:
         new_course = message.text.upper().split()[1]
         if len(new_course) != 3:
-            bot.send_message(message.chat.id, '''Ошибочка! Такой курс невозможен!
-Для добавления курса требуется ввести его аббревиатуру!
-Пример сообщения: \'/add uah\'''')
+            bot.send_message(message.chat.id, 'Ошибочка! Такой курс невозможен!\n' +
+                             'Для добавления курса требуется ввести его аббревиатуру!\n' +
+                             'Пример сообщения: \'/add uah\'')
         elif new_course in course_list:
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
-            course = check_course(new_course)
-            if course:
+            if check_course(new_course):
                 course_list.append(new_course)
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
-    except:
+    except Exception as e:
+        print(e)
         bot.send_message(message.chat.id, 'Ой! Что-то пошло не так 😰')
 
 
@@ -96,11 +93,9 @@ def send_text(message):
         else:
             bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
                              + emojize(':anxious_face_with_sweat:'))
-
     elif 'привет' in message.text.lower():
         bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name + emojize(
             ':winking_face:'))
-
     elif 'пока' in message.text.lower():
         bot.send_message(message.chat.id, 'Прощай' + emojize(':anxious_face_with_sweat:'))
     else:
