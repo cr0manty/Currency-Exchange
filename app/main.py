@@ -61,22 +61,10 @@ def empty_query(query):
 
 @bot.message_handler(commands=['know'])
 def known_course(message):
-    try:
-        text = message.text.upper().split()
-        text.remove('/know')
-        if not text:
-            bot_message = ''
-            for i in course_list:
-                bot_message += i + ' '
-            bot.send_message(message.chat.id, bot_message)
-        elif len(text) == 1:
-            bot.send_message(message.chat.id,
-                             'Я знаю такую валюту 😁' if text[0] in course_list\
-                             else 'Я еще не могу использовать ' + text[0] + ', но я скоро выучу 🥺')
-        else:
-            bot.send_message(message.chat.id, 'Я могу проверить только 1 валюту за раз 😔')
-    except:
-        return
+    bot_message = ''
+    for i in course_list:
+        bot_message += i + ' '
+    bot.send_message(message.chat.id, bot_message)
 
 
 @bot.message_handler(commands=['add'])
