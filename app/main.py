@@ -1,9 +1,11 @@
-from app.config import token, course_list
+from app.config import token
 from emoji import emojize
 from app.func import parse_text, to_digit, format_course, get_course, check_course
-from telebot import types, TeleBot
+from telebot import TeleBot, types
+from app.database import DataBase
 
 bot = TeleBot(token)
+db = DataBase()
 
 
 @bot.message_handler(commands=['start'])
@@ -65,8 +67,9 @@ def known_course(message):
 @bot.message_handler(commands=['add'])
 def add_course(message):
     try:
+        global course_list
         new_course = message.text.upper().split()[1]
-        if len(new_course) != 3:
+        if len(new_course) in range(3, 5):
             bot.send_message(message.chat.id, 'Ошибочка! Такой курс невозможен!\n' +
                              'Для добавления курса требуется ввести его аббревиатуру!\n' +
                              'Пример сообщения: \'/add uah\'')
@@ -74,7 +77,8 @@ def add_course(message):
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
             if check_course(new_course):
-                course_list.append(new_course)
+                db.insert(new_course)
+                course_list = db.select()
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
@@ -94,8 +98,8 @@ def send_text(message):
             bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
                              + emojize(':anxious_face_with_sweat:'))
     elif 'привет' in message.text.lower():
-        bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name + emojize(
-            ':winking_face:'))
+        bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name
+                         + emojize(':winking_face:'))
     elif 'пока' in message.text.lower():
         bot.send_message(message.chat.id, 'Прощай' + emojize(':anxious_face_with_sweat:'))
     else:
@@ -104,4 +108,6 @@ def send_text(message):
 
 
 if __name__ == '__main__':
+    global course_list
+    course_list = db.select()
     bot.polling()
