@@ -5,9 +5,9 @@ Feel free to try it: @money_exchange_currency_bot
 
 Commands to bot:
 
-/start - sed to launch a bot, as well as indicate initial information.<br>
-/add - add currency to bot features.<br>
-/know - display all known currencies to bot.<br>
+/start - launch a bot, show initial information.<br>
+/add - add currency to bot.<br>
+/know - display all known currencies.<br>
 
 Inline mode - the ability to use the bot not only inside the chat with him, but also beyond.
 
