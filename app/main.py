@@ -111,10 +111,9 @@ def send_text(message):
 
 if __name__ == '__main__':
     global course_list
-    course_list = db.select()
     if "HEROKU" in list(os.environ.keys()):
         server = Flask(__name__)
-
+        course_list = ['USD']
 
         @server.route('/', methods=['POST'])
         def getMessage():
@@ -131,5 +130,6 @@ if __name__ == '__main__':
 
         server.run(host="0.0.0.0", port=os.environ.get('PORT', 80))
     else:
+        course_list = db.select()
         bot.remove_webhook()
         bot.polling(none_stop=True)
