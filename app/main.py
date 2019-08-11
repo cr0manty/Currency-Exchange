@@ -1,9 +1,8 @@
-from app.config import token, server_url, course_list
+from app.config import token, check_heroku
 from emoji import emojize
 from app.func import parse_text, to_digit, format_course, get_course, check_course
 from telebot import TeleBot, types
-from flask import Flask, request
-import os
+from app.database import DataBase
 
 bot = TeleBot(token)
 
@@ -69,7 +68,7 @@ def add_course(message):
     try:
         global course_list
         new_course = message.text.upper().split()[1]
-        if len(new_course) in range(3, 5):
+        if len(new_course) > 3 and len(new_course) < 6:
             bot.send_message(message.chat.id, 'Ошибочка! Такой курс невозможен!\n' +
                              'Для добавления курса требуется ввести его аббревиатуру!\n' +
                              'Пример сообщения: \'/add uah\'')
@@ -77,9 +76,12 @@ def add_course(message):
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
             if check_course(new_course):
-                #db.insert(new_course)
-                #course_list = db.select()
-                bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
+                if not check_heroku():
+                    db.insert(new_course)
+                    course_list = db.select()
+                    bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
+                else:
+                    bot.send_message(message.chat.id, 'Увы, в данный момент я не могу добавить валюту 😰')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
     except Exception as e:
@@ -109,24 +111,10 @@ def send_text(message):
 
 if __name__ == '__main__':
     global course_list
-    if "HEROKU" in list(os.environ.keys()):
-        server = Flask(__name__)
-
-
-        @server.route('/', methods=['POST'])
-        def getMessage():
-            bot.process_new_updates([types.Update.de_json(request.stream.read().decode('utf-8'))])
-            return '!', 200
-
-
-        @server.route('/')
-        def webhook():
-            bot.remove_webhook()
-            bot.set_webhook(url=server_url+token)
-            return '?', 200
-
-
-        server.run(host="0.0.0.0", port=os.environ.get('PORT', 80))
+    if not check_heroku():
+        global db
+        db = DataBase()
+        course_list = db.select()
     else:
-        bot.remove_webhook()
-        bot.polling(none_stop=True)
+        course_list = ('USD', 'UAH', 'RUB', 'EUR', 'BTC', 'ETH', 'LTC', 'ZEC')
+    bot.polling(none_stop=True)
