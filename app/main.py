@@ -1,4 +1,4 @@
-from app.config import token, web_hook_server
+from app.config import token, server_url
 from emoji import emojize
 from app.func import parse_text, to_digit, format_course, get_course, check_course
 from telebot import TeleBot, types
@@ -8,19 +8,6 @@ import os
 
 bot = TeleBot(token)
 db = DataBase()
-app = Flask(__name__)
-
-
-@app.route('/' + token, methods=['POST'])
-def getMessage():
-    bot.process_new_updates([types.Update.de_json(request.stream.read().decode('utf-8'))])
-
-
-@app.route('/')
-def webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url=web_hook_server + token)
-    return 'Hello', 200
 
 
 @bot.message_handler(commands=['start'])
@@ -125,5 +112,24 @@ def send_text(message):
 if __name__ == '__main__':
     global course_list
     course_list = db.select()
-    # bot.polling()
-    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
+    if "HEROKU" in list(os.environ.keys()):
+        server = Flask(__name__)
+
+
+        @server.route('/', methods=['POST'])
+        def getMessage():
+            bot.process_new_updates([types.Update.de_json(request.stream.read().decode('utf-8'))])
+            return '!', 200
+
+
+        @server.route('/')
+        def webhook():
+            bot.remove_webhook()
+            bot.set_webhook(url=server_url)
+            return '?', 200
+
+
+        server.run(host="0.0.0.0", port=os.environ.get('PORT', 80))
+    else:
+        bot.remove_webhook()
+        bot.polling(none_stop=True)
