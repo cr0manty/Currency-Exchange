@@ -122,7 +122,7 @@ if __name__ == '__main__':
         @server.route('/')
         def webhook():
             bot.remove_webhook()
-            bot.set_webhook(url=server_url)
+            bot.set_webhook(url=server_url+token)
             return '?', 200
 
 
