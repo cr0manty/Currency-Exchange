@@ -79,9 +79,9 @@ def add_course(message):
                 if not check_heroku():
                     db.insert(new_course)
                     course_list = db.select()
-                    bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
                 else:
-                    bot.send_message(message.chat.id, 'Увы, в данный момент я не могу добавить валюту 😰')
+                    course_list.append(new_course)
+                bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
     except Exception as e:
@@ -116,5 +116,5 @@ if __name__ == '__main__':
         db = DataBase()
         course_list = db.select()
     else:
-        course_list = ('USD', 'UAH', 'RUB', 'EUR', 'BTC', 'ETH', 'LTC', 'ZEC')
+        course_list = ['USD', 'UAH', 'RUB', 'EUR', 'BTC', 'ETH', 'LTC', 'ZEC']
     bot.polling(none_stop=True)
