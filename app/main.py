@@ -1,13 +1,11 @@
-from app.config import token, server_url
+from app.config import token, server_url, course_list
 from emoji import emojize
 from app.func import parse_text, to_digit, format_course, get_course, check_course
 from telebot import TeleBot, types
-from app.database import DataBase
 from flask import Flask, request
 import os
 
 bot = TeleBot(token)
-db = DataBase()
 
 
 @bot.message_handler(commands=['start'])
@@ -79,8 +77,8 @@ def add_course(message):
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
             if check_course(new_course):
-                db.insert(new_course)
-                course_list = db.select()
+                #db.insert(new_course)
+                #course_list = db.select()
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
@@ -113,7 +111,7 @@ if __name__ == '__main__':
     global course_list
     if "HEROKU" in list(os.environ.keys()):
         server = Flask(__name__)
-        course_list = ['USD']
+
 
         @server.route('/', methods=['POST'])
         def getMessage():
@@ -130,6 +128,5 @@ if __name__ == '__main__':
 
         server.run(host="0.0.0.0", port=os.environ.get('PORT', 80))
     else:
-        course_list = db.select()
         bot.remove_webhook()
         bot.polling(none_stop=True)
