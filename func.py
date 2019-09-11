@@ -1,6 +1,11 @@
 import re
 import requests
-from app.config import course_api
+
+from config import course_api
+from manage import Currency
+from app import db
+
+course_list = []
 
 
 def parse_text(_text):
@@ -34,3 +39,14 @@ def get_course(values):
 def check_course(to_check):
     r = requests.get(course_api.format('usd', to_check.lower())).json()
     return False if r['error'] else True
+
+
+def init_course_list():
+    return Currency.query.all()
+
+
+def add_curenncy(name):
+    course_list.append(name)
+    db.session.add(Currency(name))
+    db.session.commit()
+

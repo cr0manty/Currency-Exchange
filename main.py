@@ -1,15 +1,24 @@
-from app.config import token, check_heroku
+# encoding=utf-8
+from flask import Flask, request
+from telebot import types
 from emoji import emojize
-from app.func import parse_text, to_digit, format_course, get_course, check_course
-from telebot import TeleBot, types
-from app.database import DataBase
 
+from telebot import TeleBot
+import os
+
+from config import token
+from config import web_hook_url
+from func import *
+from config import Configuration
+
+server = Flask(__name__)
+server.config.from_object(Configuration)
 bot = TeleBot(token)
 
 
 @bot.message_handler(commands=['start'])
 def update_course(message):
-    bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name +
+    bot.send_message(message.chat.id, 'Привет, ' + message.from_user.first_name +
                      '! Я бот который конверирует необходимую сумму из одной валюты в другую.\n' +
                      'Ты можешь использовать меня как в этом, так и в других чатах.\n' +
                      'Но тебе обязательно нужно придерживаться формата ввода 👀\n' +
@@ -66,26 +75,20 @@ def known_course(message):
 @bot.message_handler(commands=['add'])
 def add_course(message):
     try:
-        global course_list
         new_course = message.text.upper().split()[1]
         if len(new_course) > 3 and len(new_course) < 6:
-            bot.send_message(message.chat.id, 'Ошибочка! Такой курс невозможен!\n' +
+            bot.send_message(message.chat.id, 'Ошибка! Такой курс невозможен!\n' +
                              'Для добавления курса требуется ввести его аббревиатуру!\n' +
                              'Пример сообщения: \'/add uah\'')
         elif new_course in course_list:
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
             if check_course(new_course):
-                if not check_heroku():
-                    db.insert(new_course)
-                    course_list = db.select()
-                else:
-                    course_list.append(new_course)
+                add_curenncy(new_course)
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
     except Exception as e:
-        print(e)
         bot.send_message(message.chat.id, 'Ой! Что-то пошло не так 😰')
 
 
@@ -109,12 +112,19 @@ def send_text(message):
                          + emojize(':grinning_face_with_sweat:'))
 
 
+@server.route('/' + token, methods=['POST'])
+def get_message():
+    bot.process_new_updates([types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return '!', 200
+
+
+@server.route('/')
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=web_hook_url + token)
+    return 'Webhook active', 200
+
+
 if __name__ == '__main__':
-    global course_list
-    if not check_heroku():
-        global db
-        db = DataBase()
-        course_list = db.select()
-    else:
-        course_list = ['USD', 'UAH', 'RUB', 'EUR', 'BTC', 'ETH', 'LTC', 'ZEC']
-    bot.polling(none_stop=True)
+    course_list = init_course_list()
+    server.run(host='127.0.0.1', port=int(os.environ.get('PORT', 5000)))
