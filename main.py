@@ -110,7 +110,7 @@ def send_text(message):
                          + emojize(':grinning_face_with_sweat:'))
 
 
-@server.route('/{}/'.format(token), methods=['POST'])
+@server.route('/' + token, methods=['POST'])
 def get_message():
     bot.process_new_updates([types.Update.de_json(request.stream.read().decode('utf-8'))])
     return '!', 200
@@ -125,5 +125,4 @@ def webhook():
 
 if __name__ == '__main__':
     course_list = init_course_list()
-    #bot.polling(none_stop=True)
     server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
