@@ -127,4 +127,4 @@ def webhook():
 
 if __name__ == '__main__':
     course_list = init_course_list()
-    server.run(host='127.0.0.1', port=int(os.environ.get('PORT', 5000)))
+    server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
