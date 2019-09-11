@@ -5,7 +5,6 @@ web_hook_url = 'https://exchange-currency-bot.herokuapp.com/'
 
 
 class Configuration(object):
-    if "HEROKU" not in list(os.environ.keys()):
-        DEBUG = True
+    DEBUG = False if "HEROKU" in list(os.environ.keys()) else True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///curenncy.db'
