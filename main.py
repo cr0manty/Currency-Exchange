@@ -10,6 +10,7 @@ from config import token
 from config import web_hook_url
 from func import *
 from app import server
+
 bot = TeleBot(token)
 
 
@@ -73,10 +74,10 @@ def known_course(message):
 def add_course(message):
     try:
         new_course = message.text.upper().split()[1]
-        if len(new_course) > 3 and len(new_course) < 6:
+        if 3 < len(new_course) < 6:
             bot.send_message(message.chat.id, 'Ошибка! Такой курс невозможен!\n' +
                              'Для добавления курса требуется ввести его аббревиатуру!\n' +
-                             'Пример сообщения: \'/add uah\'')
+                             "Пример сообщения: '/add uah'")
         elif new_course in course_list:
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
