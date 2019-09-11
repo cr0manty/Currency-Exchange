@@ -1,5 +1,5 @@
 import os
-token = '973630042:AAE3jwuO6d7H9enrFbRRmuQlQkkun9wAdD4'
+token = '973630042:AAHmUwaqitpNSnm3BWs2uQCmY53byZxDOl8'
 course_api = 'https://api.cryptonator.com/api/ticker/{}-{}'
 web_hook_url = 'https://exchange-currency-bot.herokuapp.com/'
 
