@@ -4,3 +4,4 @@ emoji
 Flask
 flask_migrate
 flask_script
+psycopg2
