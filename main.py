@@ -8,10 +8,11 @@ import os
 
 from config import token
 from config import web_hook_url, WEB_DEBUG
-from func import *
+from func import CourseList, parse_text
 from app import server
 
 bot = TeleBot(token)
+course = CourseList()
 
 
 @bot.message_handler(commands=['start'])
@@ -31,13 +32,12 @@ def query_text(query):
         return
     text = query.query.upper().split()
     try:
-        if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
-            text.append(get_course(text))
+        if course.update(text):
             result = types.InlineQueryResultArticle(
                 id='0', title="Конвертор",
-                description=format_course(text),
+                description=str(course.value),
                 input_message_content=types.InputTextMessageContent(
-                    message_text=format_course(text)))
+                    message_text=str(course.value)))
         else:
             result = types.InlineQueryResultArticle(
                 id='0', title="Не формат", description="Формат: 'число' 'валюта из' 'валюта в'",
@@ -46,7 +46,11 @@ def query_text(query):
         bot.answer_inline_query(query.id, [result])
     except Exception as e:
         if WEB_DEBUG:
-            bot.answer_inline_query(query.id, [e, text])
+            result = types.InlineQueryResultArticle(
+                id='0', title="Ошибка", description=e,
+                input_message_content=types.InputTextMessageContent(
+                    message_text=''))
+            bot.answer_inline_query(query.id, [result])
 
 
 @bot.inline_handler(func=lambda query: len(query.query) < 8)
@@ -68,11 +72,11 @@ def empty_query(query):
 def known_course(message):
     try:
         bot_message = ''
-        if course_list is None:
+        if not course:
             bot_message = 'Прости, я еще не знаю ни одной валюты'
         else:
-            for i in course_list:
-                bot_message += i + ' '
+            for i in course:
+                bot_message += str(i) + ' '
         bot.send_message(message.chat.id, bot_message)
     except Exception as e:
         if WEB_DEBUG:
@@ -83,16 +87,17 @@ def known_course(message):
 @bot.message_handler(commands=['add'])
 def add_course(message):
     try:
-        new_course = message.text.upper().split()[1]
+        global course
+        new_course = message.text.lower().split()[1]
         if 3 < len(new_course) < 6:
             bot.send_message(message.chat.id, 'Ошибка! Такой курс невозможен!\n' +
                              'Для добавления курса требуется ввести его аббревиатуру!\n' +
                              "Пример сообщения: '/add uah'")
-        elif new_course in course_list:
+        elif new_course in course:
             bot.send_message(message.chat.id, 'Такой курс уже у меня есть!☺')
         else:
-            if check_course(new_course):
-                add_curenncy(new_course)
+            if course == new_course:
+                course += new_course
                 bot.send_message(message.chat.id, 'Ура! Теперь мне доступна новая валюта!☺')
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
@@ -108,9 +113,8 @@ def send_text(message):
     try:
         if parse_text(message.text):
             text = message.text.upper().split()
-            if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
-                text.append(get_course(text))
-                bot.send_message(message.chat.id, format_course(text))
+            if course.update(text):
+                bot.send_message(message.chat.id, str(course.value))
             else:
                 bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
                                  + emojize(':anxious_face_with_sweat:'))
@@ -142,5 +146,9 @@ def webhook():
 
 
 if __name__ == '__main__':
-    course_list = init_course_list()
-    server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    if not WEB_DEBUG:
+        bot.remove_webhook()
+        WEB_DEBUG = True
+        bot.polling()
+    else:
+        server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
