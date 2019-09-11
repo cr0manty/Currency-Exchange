@@ -7,7 +7,7 @@ from telebot import TeleBot
 import os
 
 from config import token
-from config import web_hook_url
+from config import web_hook_url, WEB_DEBUG
 from func import *
 from app import server
 
@@ -45,7 +45,8 @@ def query_text(query):
                     message_text=''))
         bot.answer_inline_query(query.id, [result])
     except Exception as e:
-        print(e)
+        if WEB_DEBUG:
+            bot.answer_inline_query(query.id, [e, text])
 
 
 @bot.inline_handler(func=lambda query: len(query.query) < 8)
@@ -59,15 +60,24 @@ def empty_query(query):
                 message_text=query.query))
         bot.answer_inline_query(query.id, [result])
     except Exception as e:
-        print(e)
+        if WEB_DEBUG:
+            bot.answer_inline_query(query.id, [e])
 
 
 @bot.message_handler(commands=['know'])
 def known_course(message):
-    bot_message = ''
-    for i in course_list:
-        bot_message += i + ' '
-    bot.send_message(message.chat.id, bot_message)
+    try:
+        bot_message = ''
+        if course_list is None:
+            bot_message = 'Прости, я еще не знаю ни одной валюты'
+        else:
+            for i in course_list:
+                bot_message += i + ' '
+        bot.send_message(message.chat.id, bot_message)
+    except Exception as e:
+        if WEB_DEBUG:
+            bot.send_message(message.chat.id, message.text)
+            bot.send_message(message.chat.id, e)
 
 
 @bot.message_handler(commands=['add'])
@@ -87,27 +97,35 @@ def add_course(message):
             else:
                 bot.send_message(message.chat.id, 'Ох! Я не могу найти такую валюту 😰')
     except Exception as e:
+        if WEB_DEBUG:
+            bot.send_message(message.chat.id, message.text)
+            bot.send_message(message.chat.id, e)
         bot.send_message(message.chat.id, 'Ой! Что-то пошло не так 😰')
 
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
-    if parse_text(message.text):
-        text = message.text.upper().split()
-        if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
-            text.append(get_course(text))
-            bot.send_message(message.chat.id, format_course(text))
+    try:
+        if parse_text(message.text):
+            text = message.text.upper().split()
+            if text[1] in course_list and text[2] in course_list and to_digit(text[0]):
+                text.append(get_course(text))
+                bot.send_message(message.chat.id, format_course(text))
+            else:
+                bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
+                                 + emojize(':anxious_face_with_sweat:'))
+        elif 'привет' in message.text.lower():
+            bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name
+                             + emojize(':winking_face:'))
+        elif 'пока' in message.text.lower():
+            bot.send_message(message.chat.id, 'Прощай' + emojize(':anxious_face_with_sweat:'))
         else:
-            bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
-                             + emojize(':anxious_face_with_sweat:'))
-    elif 'привет' in message.text.lower():
-        bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name
-                         + emojize(':winking_face:'))
-    elif 'пока' in message.text.lower():
-        bot.send_message(message.chat.id, 'Прощай' + emojize(':anxious_face_with_sweat:'))
-    else:
-        bot.send_message(message.chat.id, 'Извини, я не понимаю что ты сказал'
-                         + emojize(':grinning_face_with_sweat:'))
+            bot.send_message(message.chat.id, 'Извини, я не понимаю что ты сказал'
+                             + emojize(':grinning_face_with_sweat:'))
+    except Exception as e:
+        if WEB_DEBUG:
+            bot.send_message(message.chat.id, message.text)
+            bot.send_message(message.chat.id, e)
 
 
 @server.route('/' + token, methods=['POST'])
