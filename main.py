@@ -1,5 +1,5 @@
 # encoding=utf-8
-from flask import Flask, request
+from flask import request
 from telebot import types
 from emoji import emojize
 
@@ -9,10 +9,7 @@ import os
 from config import token
 from config import web_hook_url
 from func import *
-from config import Configuration
-
-server = Flask(__name__)
-server.config.from_object(Configuration)
+from app import server
 bot = TeleBot(token)
 
 
