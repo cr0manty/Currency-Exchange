@@ -1,5 +1,9 @@
-import re
+import os
 import requests
+import re
+
+from telebot import TeleBot, types
+from flask import request
 
 from manage import Currency
 from app import db
@@ -49,6 +53,11 @@ class CourseList:
             except ValueError:
                 return 0
 
+    @staticmethod
+    def parse_text(text):
+        value = re.search(r'\d+ \w{3} \w{3}', text)
+        return value.group() if value else None
+
     def in_list(self, text):
         return text[1] in self.course_list and text[2] in \
                self.course_list and self.to_digit(text[0])
@@ -64,6 +73,7 @@ class CourseList:
         self.course_list.append(cor)
         db.session.add(cor)
         db.session.commit()
+        return self
 
     def update(self, values):
         self.value = Value(values)
@@ -77,7 +87,7 @@ class CourseList:
         return self.course_list[index]
 
     def __contains__(self, item):
-        return item in self
+        return item in self.course_list
 
     def __len__(self):
         return len(self.course_list)
@@ -97,6 +107,42 @@ class CourseList:
             raise StopIteration
 
 
-def parse_text(text):
-    value = re.search(r'\d+ \w{3} \w{3}', text)
-    return value.group() if value else None
+class StartBot(TeleBot):
+    web_hook_url = 'https://exchange-currency-bot.herokuapp.com/'
+
+    def __init__(self, server, token, debug=False):
+        self.token = token
+        super().__init__(token)
+        self.server = server
+        self.DEBUG = bool(os.environ.get('HEROKU_DEBUG') or 0)
+        self.WEB = bool('HEROKU_DEBUG' in list(os.environ.keys()))
+        self.remove_webhook()
+
+    def start(self):
+        if self.WEB:
+            self.set_webhook(url=self.web_hook_url + self.token)
+            self.server.run(host='0.0.0.0',
+                            port=int(os.environ.get('PORT', 5000)),
+                            debug=self.DEBUG)
+        else:
+            self.polling()
+
+    def debug(self):
+        return self.DEBUG
+
+    def update(self):
+        self.process_new_updates([
+            types.Update.de_json(
+                request.stream.read().decode('utf-8'))
+        ])
+
+    def msg_error(self, chat_id, exception, command):
+        self.send_message(chat_id, "Exception called in '{}' with text: '{}'".
+                          format(command, exception)
+                          )
+
+    def query_error(self, query_id, exception):
+        result = types.InlineQueryResultArticle(
+            id='0', title="Ошибка", description=exception,
+            input_message_content='')
+        self.answer_inline_query(query_id, [result])
