@@ -1,7 +1,8 @@
 import os
+import sys
 token = '973630042:AAHmUwaqitpNSnm3BWs2uQCmY53byZxDOl8'
 web_hook_url = 'https://exchange-currency-bot.herokuapp.com/'
-WEB_DEBUG = int(os.environ.get('HEROKU_DEBUG') or '0')
+WEB_DEBUG = int(os.environ.get('HEROKU_DEBUG') or sys.argv[1] or 0)
 
 
 class Configuration(object):

@@ -87,7 +87,7 @@ def known_course(message):
 @bot.message_handler(commands=['add'])
 def add_course(message):
     try:
-        global course
+        from main import course
         new_course = message.text.lower().split()[1]
         if 3 < len(new_course) < 6:
             bot.send_message(message.chat.id, 'Ошибка! Такой курс невозможен!\n' +
@@ -136,13 +136,6 @@ def send_text(message):
 def get_message():
     bot.process_new_updates([types.Update.de_json(request.stream.read().decode('utf-8'))])
     return '!', 200
-
-
-# @server.route('/')
-# def webhook():
-#     bot.remove_webhook()
-#     bot.set_webhook(url=web_hook_url + token)
-#     return 'Webhook active', 200
 
 
 if __name__ == '__main__':
