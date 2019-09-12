@@ -59,12 +59,11 @@ class CourseList:
         r = requests.get(self.API.format('usd', other)).json()
         return False if r['error'] else True
 
-    def __add__(self, other):
+    def __iadd__(self, other):
         cor = Currency(name=other)
         self.course_list.append(cor)
         db.session.add(cor)
         db.session.commit()
-        return self
 
     def update(self, values):
         self.value = Value(values)
