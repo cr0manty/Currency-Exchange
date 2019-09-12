@@ -114,7 +114,7 @@ def send_text(message):
         if parse_text(message.text):
             text = message.text.upper().split()
             if course.update(text):
-                bot.send_message(message.chat.id, str(course.value))
+                bot.send_message(message.chat.id, str(course))
             else:
                 bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
                                  + emojize(':anxious_face_with_sweat:'))
