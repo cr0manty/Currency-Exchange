@@ -138,17 +138,17 @@ def get_message():
     return '!', 200
 
 
-@server.route('/')
-def webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url=web_hook_url + token)
-    return 'Webhook active', 200
+# @server.route('/')
+# def webhook():
+#     bot.remove_webhook()
+#     bot.set_webhook(url=web_hook_url + token)
+#     return 'Webhook active', 200
 
 
 if __name__ == '__main__':
+    bot.remove_webhook()
     if not WEB_DEBUG:
-        bot.remove_webhook()
-        WEB_DEBUG = True
         bot.polling()
     else:
+        bot.set_webhook(url=web_hook_url + token)
         server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

@@ -5,34 +5,35 @@ from manage import Currency
 from app import db
 
 
+class Value:
+    def __init__(self, text):
+        try:
+            self.amount_from = CourseList.to_digit(text[0])
+            self.name_from = text[1]
+            self.name_to = text[2]
+            self.amount_to = 0
+        except:
+            raise ValueError('Not enough information')
+
+    def __str__(self):
+        return '{} {} = {} {}'.format(self.amount_from,
+                                      self.name_from,
+                                      self.amount_to,
+                                      self.name_to)
+
+    def __bool__(self):
+        return self.name_to and self.amount_from
+
+    def get(self):
+        course = requests.get(CourseList.API.format(
+            self.name_from, self.name_to)).json()['ticker']['price']
+        self.amount_to = round(CourseList.to_digit(course) * self.amount_from, 4)
+
+
 class CourseList:
     course_list = []
     value = None
     API = 'https://api.cryptonator.com/api/ticker/{}-{}'
-
-    class Value:
-        def __init__(self, text):
-            try:
-                self.amount_from = CourseList.to_digit(text[0])
-                self.name_from = text[1]
-                self.name_to = text[2]
-                self.amount_to = 0
-            except:
-                raise ValueError('Not enough information')
-
-        def __str__(self):
-            return '{} {} = {} {}'.format(self.amount_from,
-                                          self.name_from,
-                                          self.amount_to,
-                                          self.name_to)
-
-        def __bool__(self):
-            return self.name_to and self.amount_from
-
-        def get(self):
-            course = requests.get(CourseList.API.format(
-                self.name_from, self.name_to)).json()['ticker']['price']
-            self.amount_to = round(CourseList.to_digit(course) * self.amount_from, 4)
 
     def __init__(self):
         self.course_list = Currency.query.all()
@@ -66,7 +67,7 @@ class CourseList:
         return self
 
     def update(self, values):
-        self.value = self.Value(values)
+        self.value = Value(values)
         self.value.get()
         return self.value is not None
 
