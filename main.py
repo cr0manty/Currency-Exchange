@@ -1,7 +1,5 @@
 # encoding=utf-8
 from telebot import types
-from emoji import emojize
-import os
 
 from module import CourseList, StartBot
 from config import TOKEN
@@ -107,19 +105,19 @@ def send_text(message):
             if course.update(text):
                 bot.send_message(message.chat.id, str(course))
             else:
-                bot.send_message(message.chat.id, 'Выражение введено неправильно или одна из валют мне не известна'
-                                 + emojize(':anxious_face_with_sweat:'))
+                bot.send_message(message.chat.id, 'Выражение введенонеправильно'
+                                                  'или одна из валют мне не известна 😰')
         elif 'привет' in message.text.lower():
             bot.send_message(message.chat.id, 'Приветик, ' + message.from_user.first_name
-                             + emojize(':winking_face:'))
+                             + '😉')
         elif 'пока' in message.text.lower():
-            bot.send_message(message.chat.id, 'Прощай' + emojize(':anxious_face_with_sweat:'))
+            bot.send_message(message.chat.id, 'Прощай 😰')
         else:
-            bot.send_message(message.chat.id, 'Извини, я не понимаю что ты сказал'
-                             + emojize(':grinning_face_with_sweat:'))
+            bot.send_message(message.chat.id, 'Извини, я не понимаю что ты сказал 😅')
     except Exception as e:
         if bot.debug():
             bot.msg_error(message.chat.id, e, message.text)
+        bot.send_message(message.chat.id, 'Ой! Что-то пошло не так 😰')
 
 
 @server.route('/' + TOKEN, methods=['POST'])

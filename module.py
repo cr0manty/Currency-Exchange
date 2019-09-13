@@ -11,13 +11,10 @@ from app import db
 
 class Value:
     def __init__(self, text):
-        try:
-            self.amount_from = CourseList.to_digit(text[0])
-            self.name_from = text[1]
-            self.name_to = text[2]
-            self.amount_to = 0
-        except:
-            raise ValueError('Not enough information')
+        self.amount_from = CourseList.to_digit(text[0])
+        self.name_from = text[1]
+        self.name_to = text[2]
+        self.amount_to = 0
 
     def __str__(self):
         return '{} {} = {} {}'.format(self.amount_from,
@@ -114,7 +111,7 @@ class StartBot(TeleBot):
         self.token = token
         super().__init__(token)
         self.server = server
-        self.DEBUG = bool(os.environ.get('HEROKU_DEBUG') or 0)
+        self.DEBUG = bool(os.environ.get('HEROKU_DEBUG') or debug)
         self.WEB = bool('HEROKU_DEBUG' in list(os.environ.keys()))
         self.remove_webhook()
 
